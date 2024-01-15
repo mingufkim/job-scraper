@@ -1,3 +1,4 @@
+import csv
 import time
 
 from bs4 import BeautifulSoup
@@ -41,3 +42,12 @@ for job in jobs:
     }
 
     jobs_db.append(job)
+
+file = open("python.csv", mode="w", encoding="utf-8-sig", newline="")
+writer = csv.writer(file)
+writer.writerow(["Title", "Company", "Location", "Link"])
+
+for job in jobs_db:
+    writer.writerow(job.values())
+
+file.close()
