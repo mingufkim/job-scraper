@@ -4,50 +4,66 @@ import time
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-p = sync_playwright().start()
 
-browser = p.chromium.launch(headless=False)
+class JobScraper:
+    def __init__(self, query):
+        self.query = query
+        self.jobs_db = []
 
-page = browser.new_page()
+    def scrape_jobs(self):
+        p = sync_playwright().start()
 
-page.goto("https://www.wanted.co.kr/search?query=python&tab=position")
+        browser = p.chromium.launch(headless=False)
 
-for i in range(5):
-    time.sleep(3)
-    page.keyboard.down("End")
+        page = browser.new_page()
 
-content = page.content()
+        page.goto(f"https://www.wanted.co.kr/search?query={self.query}&tab=position")
 
-browser.close()
+        for i in range(5):
+            time.sleep(2.5)
+            page.keyboard.down("End")
 
-p.stop()
+        content = page.content()
 
-soup = BeautifulSoup(content, "html.parser")
+        browser.close()
 
-jobs = soup.find_all("div", class_="JobCard_container__FqChn")
+        p.stop()
 
-jobs_db = []
+        soup = BeautifulSoup(content, "html.parser")
 
-for job in jobs:
-    title = job.find("strong", class_="JobCard_title__ddkwM").text
-    company = job.find("span", class_="JobCard_companyName__vZMqJ").text
-    location = job.find("span", class_="JobCard_location__2EOr5").text
-    link = f"https://www.wanted.co.kr{job.find('a')['href']}"
+        jobs = soup.find_all("div", class_="JobCard_container__FqChn")
 
-    job = {
-        "title": title,
-        "company": company,
-        "location": location,
-        "link": link
-    }
+        for job in jobs:
+            title = job.find("strong", class_="JobCard_title__ddkwM").text
+            company = job.find("span", class_="JobCard_companyName__vZMqJ").text
+            location = job.find("span", class_="JobCard_location__2EOr5").text
+            link = f"https://www.wanted.co.kr{job.find('a')['href']}"
 
-    jobs_db.append(job)
+            job = {
+                "title": title,
+                "company": company,
+                "location": location,
+                "link": link
+            }
 
-file = open("python.csv", mode="w", encoding="utf-8-sig", newline="")
-writer = csv.writer(file)
-writer.writerow(["Title", "Company", "Location", "Link"])
+            self.jobs_db.append(job)
 
-for job in jobs_db:
-    writer.writerow(job.values())
+    def save_to_file(self):
+        filename = self.query.replace(" ", "_").lower() + ".csv"
+        file = open(filename, mode="w", encoding="utf-8-sig", newline="")
+        writer = csv.writer(file)
+        writer.writerow(["Title", "Company", "Location", "Link"])
 
-file.close()
+        for job in self.jobs_db:
+            writer.writerow(job.values())
+
+        file.close()
+
+
+if __name__ == "__main__":
+    queries = ["python", "java", "flutter"]
+
+    for query in queries:
+        job_scraper = JobScraper(query)
+        job_scraper.scrape_jobs()
+        job_scraper.save_to_file()
