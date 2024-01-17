@@ -1,4 +1,3 @@
-import csv
 import time
 
 from bs4 import BeautifulSoup
@@ -20,7 +19,7 @@ class JobScraper:
         page.goto(f"https://www.wanted.co.kr/search?query={self.query}&tab=position")
 
         for i in range(5):
-            time.sleep(2.5)
+            time.sleep(1)
             page.keyboard.down("End")
 
         content = page.content()
@@ -48,22 +47,4 @@ class JobScraper:
 
             self.jobs_db.append(job)
 
-    def save_to_file(self):
-        filename = self.query.replace(" ", "_").lower() + ".csv"
-        file = open(filename, mode="w", encoding="utf-8-sig", newline="")
-        writer = csv.writer(file)
-        writer.writerow(["Title", "Company", "Location", "Link"])
-
-        for job in self.jobs_db:
-            writer.writerow(job.values())
-
-        file.close()
-
-
-if __name__ == "__main__":
-    queries = ["python", "java", "flutter"]
-
-    for query in queries:
-        job_scraper = JobScraper(query)
-        job_scraper.scrape_jobs()
-        job_scraper.save_to_file()
+        return self.jobs_db
